@@ -9,13 +9,11 @@ github_token = os.getenv('GITHUB_TOKEN')
 repo_name = os.getenv('GITHUB_REPOSITORY')
 pr_number = os.getenv('PR_NUMBER')
 event_name = os.getenv('EVENT_NAME')
+openai_model = os.getenv('OPENAI_MODEL')
 
 g = Github(github_token)
 repo = g.get_repo(repo_name)
 pr = repo.get_pull(int(pr_number))
-
-# OpenAI Model
-OPENAI_MODEL = "gpt-4o"
 
 # 수정한 파일들의 해시값을 기록하는 딕셔너리
 file_hashes = {}
@@ -137,7 +135,7 @@ def review_code(current_diff, previous_diff, conversation_history):
     messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 꼼꼼히 리뷰해줘!"})
 
     response = openai.ChatCompletion.create(
-        model=OPENAI_MODEL,
+        model=openai_model,
         messages=messages,
         max_tokens=10000
     )
@@ -145,7 +143,7 @@ def review_code(current_diff, previous_diff, conversation_history):
 
     # 머지 결정 부분에서는 대화 이력이 필요없음
     merge_decision = openai.ChatCompletion.create(
-        model=OPENAI_MODEL,
+        model=openai_model,
         messages=[
             {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘. 한국어로 대답해!"},
             {"role": "user", "content": f"이 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
@@ -171,7 +169,7 @@ def respond_to_comment(comment_content, file_content, conversation_history):
     })
 
     response = openai.ChatCompletion.create(
-        model=OPENAI_MODEL,  # 모델 이름 수정
+        model=openai_model,  # 모델 이름 수정
         messages=messages,
         max_tokens=10000
     )
