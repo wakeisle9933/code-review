@@ -9,7 +9,7 @@ github_token = os.getenv('GITHUB_TOKEN')
 repo_name = os.getenv('GITHUB_REPOSITORY')
 pr_number = os.getenv('PR_NUMBER')
 event_name = os.getenv('EVENT_NAME')
-openai_model = os.getenv('OPENAI_MODEL')
+openai_model = os.getenv('OPENAI_MODEL', 'gpt-4o')
 
 g = Github(github_token)
 repo = g.get_repo(repo_name)
