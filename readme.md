@@ -26,7 +26,8 @@ Hello there! This project is an awesome system that automatically provides AI co
    3-2. In the left sidebar, expand "Secrets and variables" and select "Actions" 🔒  
    3-3. Click on the "New repository secret" button ➕  
    3-4. In the "Name" field, enter `OPENAI_API_KEY`, and in the "Secret" field, paste your OpenAI API key 🔑  
-   3-5. Click the "Add secret" button to save it 💾
+   3-5. Click the "Add secret" button to save it 💾  
+   3-6. Follow the same steps to add `OPENAI_MODEL`! 🌟 You can choose any model name from this link (https://openai.com/api/pricing/)! If you don't set it, gpt-4o will be used as the default 🤖
 4. Create a Pull Request targeting the master branch to receive awesome AI reviews! 🎭  
    4-1. If you want to apply AI reviews to other branches or multiple branches, modify the `branches` section in the `ai-code-review.yml` file like this:
 
