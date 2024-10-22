@@ -1,9 +1,14 @@
+import requests
 import os
 import openai
 from github import Github
 import re
 import hashlib
+import json
 
+ai_provider = os.getenv('AI_PROVIDER')
+openrouter_api_key = os.getenv('OPENROUTER_API_KEY')
+openrouter_model_id = os.getenv('OPENROUTER_MODEL_ID', 'anthropic/claude-3.5-sonnet')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 github_token = os.getenv('GITHUB_TOKEN')
 repo_name = os.getenv('GITHUB_REPOSITORY')
@@ -17,6 +22,39 @@ pr = repo.get_pull(int(pr_number))
 
 # 수정한 파일들의 해시값을 기록하는 딕셔너리
 file_hashes = {}
+
+def call_ai_api(messages):
+    if ai_provider == 'openai':
+        return call_openai_api(messages)
+    elif ai_provider == 'openrouter':
+        return call_openrouter_api(messages)
+    else:
+        raise ValueError(f"지원하지 않는 AI 제공자예요: {ai_provider}")
+
+def call_openai_api(messages):
+    response = openai.ChatCompletion.create(
+        model=openai_model,
+        messages=messages,
+        max_tokens=10000
+    )
+    return response.choices[0].message['content'].strip()
+
+def call_openrouter_api(messages):
+    response = requests.post(
+        url="https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {openrouter_api_key}",
+            "Content-Type": "application/json"
+        },
+        data=json.dumps({
+            "model": openrouter_model_id,
+            "messages": messages
+        })
+    )
+    try:
+        return response.json()['choices'][0]['message']['content'].strip()
+    except (KeyError, IndexError) as e:
+        raise ValueError(f"OpenRouter API 응답 처리 중 오류 발생: {str(e)}")
 
 def review_pr():
     excluded_extensions = ('.exe', '.dll', '.so', '.dylib', '.bin')
@@ -134,25 +172,14 @@ def review_code(current_diff, previous_diff, conversation_history):
     # 새로운 사용자 메시지를 마지막에 추가
     messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 꼼꼼히 리뷰해줘!"})
 
-    response = openai.ChatCompletion.create(
-        model=openai_model,
-        messages=messages,
-        max_tokens=10000
-    )
-    review = response.choices[0].message['content'].strip()
+    review = call_ai_api(messages)
 
-    # 머지 결정 부분에서는 대화 이력이 필요없음
-    merge_decision = openai.ChatCompletion.create(
-        model=openai_model,
-        messages=[
-            {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘. 한국어로 대답해!"},
-            {"role": "user", "content": f"이 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
-        ],
-        max_tokens=300
-    )
-    decision = merge_decision.choices[0].message['content'].strip()
+    merge_decision = call_ai_api([
+        {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘. 한국어로 대답해!"},
+        {"role": "user", "content": f"이 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
+    ])
 
-    return f"{review}\n\n**결론 : {decision}**"
+    return f"{review}\n\n**결론 : {merge_decision}**"
 
 def respond_to_comment(comment_content, file_content, conversation_history):
     messages = [
@@ -168,12 +195,7 @@ def respond_to_comment(comment_content, file_content, conversation_history):
         "content": f"다음 코드에 대한 질문이 있어:\n\n```java\n{file_content}\n```\n\n{comment_content}"
     })
 
-    response = openai.ChatCompletion.create(
-        model=openai_model,  # 모델 이름 수정
-        messages=messages,
-        max_tokens=10000
-    )
-    return response.choices[0].message['content'].strip()
+    return call_ai_api(messages)
 
 def update_all_file_hashes_in_comment(pr, file_hashes):
     # 모든 파일 해시값을 하나의 코멘트로 작성
