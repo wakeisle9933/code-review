@@ -175,13 +175,13 @@ def review_code(current_diff, previous_diff, conversation_history):
     messages.extend(conversation_history)
 
     # 새로운 사용자 메시지를 마지막에 추가
-    messages.append({"role": "user", "content": f"Previous diff:\n{previous_diff}\n\nCurrent diff:\n{current_diff}\n\nPlease review the current diff and focus on the most recent changes in the previous diff."})
+    messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 꼼꼼히 리뷰해줘!"})
 
     review = call_ai_api(messages)
 
     merge_decision = call_ai_api([
-        {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘. 한국어로 대답해!"},
-        {"role": "user", "content": f"이 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
+        {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘."},
+        {"role": "user", "content": f"다음 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
     ])
 
     return f"{review}\n\n**결론 : {merge_decision}**"
