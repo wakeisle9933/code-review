@@ -54,6 +54,8 @@ def call_openrouter_api(messages):
     try:
         return response.json()['choices'][0]['message']['content'].strip()
     except (KeyError, IndexError) as e:
+        print("Response status code:", response.status_code)
+        print("Response text:", response.text)
         raise ValueError(f"OpenRouter API 응답 처리 중 오류 발생: {str(e)}")
 
 def review_pr():
