@@ -10,6 +10,7 @@ ai_provider = os.getenv('AI_PROVIDER')
 openrouter_api_key = os.getenv('OPENROUTER_API_KEY')
 openrouter_model_id = os.getenv('OPENROUTER_MODEL_ID', 'anthropic/claude-3.5-sonnet')
 openai.api_key = os.getenv('OPENAI_API_KEY')
+MAX_TOKENS = os.getenv('MAX_TOKENS')
 github_token = os.getenv('GITHUB_TOKEN')
 repo_name = os.getenv('GITHUB_REPOSITORY')
 pr_number = os.getenv('PR_NUMBER')
@@ -35,7 +36,7 @@ def call_openai_api(messages):
     response = openai.ChatCompletion.create(
         model=openai_model,
         messages=messages,
-        max_tokens=10000
+        max_tokens=MAX_TOKENS
     )
     return response.choices[0].message['content'].strip()
 
@@ -48,7 +49,8 @@ def call_openrouter_api(messages):
         },
         data=json.dumps({
             "model": openrouter_model_id,
-            "messages": messages
+            "messages": messages,
+            "max_tokens": MAX_TOKENS
         })
     )
     response_json = response.json()
@@ -168,7 +170,7 @@ def get_all_previous_diffs(pr, file_path):
 
 def review_code(current_diff, previous_diff, conversation_history):
     messages = [
-        {"role": "system", "content": "You are a friendly and enthusiastic code reviewer. Consider the previous conversation history and review the current code changes. First find something to praise, then focus on these three main aspects: **1. Changes and Functionality Verification ✅** **2. Code Quality (bugs, readability, maintainability) 🧐** **3. Performance and Optimization 🚀**. For code quality/readability, only suggest method documentation comments for complex methods. If there are areas for improvement, create a '**🎯 Suggestions for Improvement**' section with specific code examples. End the review with praise, and if changes are needed before merging, clearly indicate the file locations that need modification and request additional commits for review. Offer to answer any questions through comments. Use many emojis and respond in Korean with a casual, friendly tone."},
+        {"role": "system", "content": "You are a helpful and informative code reviewer. Consider the previous conversation history and review the current code changes. First find something to praise, then focus on these three main aspects: **1. Changes and Functionality Verification ✅** **2. Code Quality (bugs, readability, maintainability) 🧐** **3. Performance and Optimization 🚀**. For code quality/readability, only suggest method documentation comments for complex methods. If there are areas for improvement, create a '**🎯 Suggestions for Improvement**' section with specific code examples. End the review with praise, and if changes are needed before merging, clearly indicate the file locations that need modification and request additional commits for review. If suggestions for improvement are present but deemed non-essential, it’s okay to merge without additional commits. Offer to answer any questions through comments. Use many emojis and respond in Korean with a casual, friendly tone."},
     ]
 
     # 대화 이력을 추가
@@ -188,7 +190,7 @@ def review_code(current_diff, previous_diff, conversation_history):
 
 def respond_to_comment(comment_content, file_content, conversation_history):
     messages = [
-        {"role": "system", "content": "You are a friendly and enthusiastic AI assistant. Use many emojis and respond in Korean with a casual, friendly tone. Express gratitude and appreciation for questions, actively respond to user comments, and offer to review any additional questions through comments before ending the conversation."},
+        {"role": "system", "content": "You are a helpful and informative AI assistant. Use many emojis and respond in Korean with a casual, friendly tone. Express gratitude and appreciation for questions, actively respond to user comments, and offer to review any additional questions through comments before ending the conversation."},
     ]
 
     # 대화 이력 추가
