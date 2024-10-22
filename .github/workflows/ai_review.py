@@ -168,27 +168,27 @@ def get_all_previous_diffs(pr, file_path):
 
 def review_code(current_diff, previous_diff, conversation_history):
     messages = [
-        {"role": "system", "content": "너는 활발하고 친근한 코드 리뷰어야. 이전 대화 내용을 고려하면서, 현재 제공된 코드 변경사항에 대해서 칭찬할 부분을 찾아 칭찬한 뒤 다음 세 가지 주제를 중심으로 코드 리뷰를 해줘 **1. 변경 사항 및 동작 여부 확인 ✅** **2. 코드 품질(버그, 가독성, 유지보수성) 🧐** **3. 퍼포먼스 및 최적화 🚀** 여기서 코드 품질의 가독성의 경우에는 필수로 요구하지 말고 복잡한 메소드의 경우에만 메소드 문서화 주석을 첨부해서 조언해줘, 이후 개선할 부분이 있다면 '**🎯 개선 제안**' 파트를 작성하되 어떻게 개선해야 할 지 구체적인 코드도 같이 보여주고, 리뷰 끝에는 칭찬과 더불어 수정 후 머지가 필요할 경우에는 어디를 고쳐야 할 지 명확하게 파일 내에서 위치를 알려준 후 수정 후 다시 검토하고 싶다고 추가 커밋을 부탁하고 궁금한 점이 있으면 코멘트를 작성해주면 추가로 검토해주겠다고 한 후 끝내, 이모지를 많이 쓰고, 반말로 얘기하고, 한국어로만 대답해."},
+        {"role": "system", "content": "You are a friendly and enthusiastic code reviewer. Consider the previous conversation history and review the current code changes. First find something to praise, then focus on these three main aspects: **1. Changes and Functionality Verification ✅** **2. Code Quality (bugs, readability, maintainability) 🧐** **3. Performance and Optimization 🚀**. For code quality/readability, only suggest method documentation comments for complex methods. If there are areas for improvement, create a '**🎯 Suggestions for Improvement**' section with specific code examples. End the review with praise, and if changes are needed before merging, clearly indicate the file locations that need modification and request additional commits for review. Offer to answer any questions through comments. Use many emojis and respond in Korean with a casual, friendly tone."},
     ]
 
     # 대화 이력을 추가
     messages.extend(conversation_history)
 
-    # 새로운 사용자 메시지를 마지막에 추가
-    messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 꼼꼼히 리뷰해줘!"})
+    #  새로운 사용자 메시지를 마지막에 추가
+    messages.append({"role": "user", "content": f"Previous diff:\n{previous_diff}\n\nCurrent diff:\n{current_diff}\n\nCompare these two diffs, focusing on the most recent (top) item from the previous diff and thoroughly review all changes in the current diff!"})
 
     review = call_ai_api(messages)
 
     merge_decision = call_ai_api([
-        {"role": "system", "content": "리뷰 내용을 바탕으로 머지 여부를 결정해줘. '머지해도 좋을 것 같아 💯👍' 또는 '머지하면 안될 것 같아 🙈🌧️' 중 하나로만 대답해줘."},
-        {"role": "user", "content": f"다음 리뷰를 바탕으로 머지 여부를 결정해줘:\n\n{review}"}
+        {"role": "system", "content": "Based on the review content, make a merge decision. Respond only with either '머지해도 좋을 것 같아 💯👍' or '머지하면 안될 것 같아 🙈🌧️' in Korean."},
+        {"role": "user", "content": f"Make a merge decision based on this review:\n\n{review}"}
     ])
 
     return f"{review}\n\n**결론 : {merge_decision}**"
 
 def respond_to_comment(comment_content, file_content, conversation_history):
     messages = [
-        {"role": "system", "content": "너는 활발하고 친근한 AI 어시스턴트야. 이모지를 많이 쓰고, 반말로 얘기하고, 한국어로만 대답해. 질문에 대해 감사와 칭찬을 표현한 뒤 사용자 코멘트에 적극적으로 반응하고 대답하고 궁금한 점이 있으면 코멘트를 작성해주면 추가로 검토해주겠다고 한 후 대화를 마쳐"},
+        {"role": "system", "content": "You are a friendly and enthusiastic AI assistant. Use many emojis and respond in Korean with a casual, friendly tone. Express gratitude and appreciation for questions, actively respond to user comments, and offer to review any additional questions through comments before ending the conversation."},
     ]
 
     # 대화 이력 추가
@@ -197,7 +197,7 @@ def respond_to_comment(comment_content, file_content, conversation_history):
     # 새로운 사용자 메시지와 해당 코드 스니펫 추가
     messages.append({
         "role": "user",
-        "content": f"다음 코드에 대한 질문이 있어:\n\n```java\n{file_content}\n```\n\n{comment_content}"
+        "content": f"I have a question about this code:\n\n```java\n{file_content}\n```\n\n{comment_content}"
     })
 
     return call_ai_api(messages)
