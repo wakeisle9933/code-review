@@ -175,7 +175,7 @@ def review_code(current_diff, previous_diff, conversation_history):
     messages.extend(conversation_history)
 
     # 새로운 사용자 메시지를 마지막에 추가
-    messages.append({"role": "user", "content": f"Previous diff:\n{previous_diff}\n\nCurrent diff:\n{current_diff}\n\nPlease compare these two diffs, focusing on the latest (top-most) item from the previous diff, and review all changes based on the current diff!"})
+    messages.append({"role": "user", "content": f"Previous diff:\n{previous_diff}\n\nCurrent diff:\n{current_diff}\n\nPlease review the current diff and focus on the most recent changes in the previous diff."})
 
     review = call_ai_api(messages)
 
