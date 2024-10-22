@@ -56,7 +56,8 @@ def call_openrouter_api(messages):
         return response_json['choices'][0]['message']['content'].strip()
     elif 'error' in response_json:
         error_message = response_json['error'].get('message', 'Unknown error')
-        raise ValueError(f"OpenRouter API 에러 발생: {error_message}")
+        full_error = json.dumps(response_json['error'], indent=4)
+        raise ValueError(f"OpenRouter API 에러 발생: {error_message}\n에러 상세 정보: {full_error}")
     else:
         raise ValueError("OpenRouter API 응답 처리 중 알 수 없는 오류 발생")
 
@@ -174,7 +175,7 @@ def review_code(current_diff, previous_diff, conversation_history):
     messages.extend(conversation_history)
 
     # 새로운 사용자 메시지를 마지막에 추가
-    messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 리뷰해줘!"})
+    messages.append({"role": "user", "content": f"Previous diff:\n{previous_diff}\n\nCurrent diff:\n{current_diff}\n\nPlease compare these two diffs, focusing on the latest (top-most) item from the previous diff, and review all changes based on the current diff!"})
 
     review = call_ai_api(messages)
 
