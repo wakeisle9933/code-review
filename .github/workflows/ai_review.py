@@ -51,12 +51,14 @@ def call_openrouter_api(messages):
             "messages": messages
         })
     )
-    try:
-        return response.json()['choices'][0]['message']['content'].strip()
-    except (KeyError, IndexError) as e:
-        print("Response status code:", response.status_code)
-        print("Response text:", response.text)
-        raise ValueError(f"OpenRouter API 응답 처리 중 오류 발생: {str(e)}")
+    response_json = response.json()
+    if 'choices' in response_json:
+        return response_json['choices'][0]['message']['content'].strip()
+    elif 'error' in response_json:
+        error_message = response_json['error'].get('message', 'Unknown error')
+        raise ValueError(f"OpenRouter API 에러 발생: {error_message}")
+    else:
+        raise ValueError("OpenRouter API 응답 처리 중 알 수 없는 오류 발생")
 
 def review_pr():
     excluded_extensions = ('.exe', '.dll', '.so', '.dylib', '.bin')
@@ -165,14 +167,14 @@ def get_all_previous_diffs(pr, file_path):
 
 def review_code(current_diff, previous_diff, conversation_history):
     messages = [
-        {"role": "system", "content": "너는 활발하고 친근한 코드 리뷰어야. 이전 대화 내용을 고려하면서, 현재 제공된 코드 변경사항에 대해서 칭찬할 부분을 찾아 칭찬한 뒤 다음 세 가지 주제를 중심으로 코드 리뷰를 해줘 **1. 변경 사항 및 동작 여부 확인 ✅** **2. 코드 품질(버그, 가독성, 유지보수성) 🧐** **3. 성능 및 최적화 🚀** 여기서 코드 품질의 가독성의 경우에는 필수로 요구하지 말고 복잡한 메소드의 경우에만 메소드 문서화 주석을 첨부해서 조언해줘, 이후 개선할 부분이 있다면 '**🎯 개선 제안**' 파트를 작성하되 어떻게 개선해야 할 지 구체적인 코드도 같이 보여주고, 리뷰 끝에는 칭찬과 더불어 수정 후 머지가 필요할 경우에는 어디를 고쳐야 할 지 명확하게 파일 내에서 위치를 알려준 후 수정 후 다시 검토하고 싶다고 추가 커밋을 부탁하고 궁금한 점이 있으면 코멘트를 작성해주면 추가로 검토해주겠다고 한 후 끝내, 이모지를 많이 쓰고, 반말로 얘기하고, 한국어로만 대답해."},
+        {"role": "system", "content": "너는 활발하고 친근한 코드 리뷰어야. 이전 대화 내용을 고려하면서, 현재 제공된 코드 변경사항에 대해서 칭찬할 부분을 찾아 칭찬한 뒤 다음 세 가지 주제를 중심으로 코드 리뷰를 해줘 **1. 변경 사항 및 동작 여부 확인 ✅** **2. 코드 품질(버그, 가독성, 유지보수성) 🧐** **3. 퍼포먼스 및 최적화 🚀** 여기서 코드 품질의 가독성의 경우에는 필수로 요구하지 말고 복잡한 메소드의 경우에만 메소드 문서화 주석을 첨부해서 조언해줘, 이후 개선할 부분이 있다면 '**🎯 개선 제안**' 파트를 작성하되 어떻게 개선해야 할 지 구체적인 코드도 같이 보여주고, 리뷰 끝에는 칭찬과 더불어 수정 후 머지가 필요할 경우에는 어디를 고쳐야 할 지 명확하게 파일 내에서 위치를 알려준 후 수정 후 다시 검토하고 싶다고 추가 커밋을 부탁하고 궁금한 점이 있으면 코멘트를 작성해주면 추가로 검토해주겠다고 한 후 끝내, 이모지를 많이 쓰고, 반말로 얘기하고, 한국어로만 대답해."},
     ]
 
     # 대화 이력을 추가
     messages.extend(conversation_history)
 
     # 새로운 사용자 메시지를 마지막에 추가
-    messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 꼼꼼히 리뷰해줘!"})
+    messages.append({"role": "user", "content": f"이전 diff:\n{previous_diff}\n\n현재 diff:\n{current_diff}\n\n이 두 diff를 비교하되 이전 diff 중에서는 가장 최신(최상단)에 있는 항목과, 현재 diff를 중심으로 모든 변경사항을 리뷰해줘!"})
 
     review = call_ai_api(messages)
 
