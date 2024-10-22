@@ -28,12 +28,28 @@ jobs:
 
       - name: Run AI Code Review
         env:
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL_ID: ${{ vars.OPENROUTER_MODEL_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
           EVENT_NAME: ${{ github.event_name }}
           COMMENT_ID: ${{ github.event.comment.id }}
         run: |
-          echo "AI 코드 리뷰 실행 중..."
+          echo "Running AI code review... 🚀"
+          if [ -z "$AI_PROVIDER" ]; then
+            echo "AI_PROVIDER is not set! 😱 Please set it to 'openai' or 'openrouter'."
+            exit 1
+          fi
+          
+          if [ "$AI_PROVIDER" = "openai" ] && [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY is missing! 😱 Please set it in your repository secrets."
+            exit 1
+          elif [ "$AI_PROVIDER" = "openrouter" ] && [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY is missing! 😱 Please set it in your repository secrets."
+            exit 1
+          fi
+          
           python3 .github/workflows/ai_review.py
