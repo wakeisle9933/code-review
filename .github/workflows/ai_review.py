@@ -8,7 +8,7 @@ import json
 
 ai_provider = os.getenv('AI_PROVIDER')
 openrouter_api_key = os.getenv('OPENROUTER_API_KEY')
-openrouter_model_id = os.getenv('OPENROUTER_MODEL_ID', 'anthropic/claude-3.5-sonnet')
+openrouter_model_id = os.getenv('OPENROUTER_MODEL_ID', 'anthropic/claude-3.5-sonnet:beta')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 MAX_TOKENS = os.getenv('MAX_TOKENS')
 github_token = os.getenv('GITHUB_TOKEN')
